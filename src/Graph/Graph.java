@@ -8,9 +8,21 @@ public class Graph {
     public int upperBound;
     int edgeCardinality;
 
-    ArrayList<LinkedList<Edge>> incidency;   // Undirected edges
-    ArrayList<LinkedList<Arc>> inIncidency;  // Incoming arcs
-    ArrayList<LinkedList<Arc>> outIncidency; // Outgoing arcs
+    private ArrayList<LinkedList<Edge>> incidency;   // Undirected edges
+    private ArrayList<LinkedList<Arc>> inIncidency;  // Incoming arcs
+    private ArrayList<LinkedList<Arc>> outIncidency; // Outgoing arcs
+
+    public ArrayList<LinkedList<Edge>> getIncidency() {
+        return incidency;
+    }
+
+    public ArrayList<LinkedList<Arc>> getInIncidency() {
+        return inIncidency;
+    }
+
+    public ArrayList<LinkedList<Arc>> getOutIncidency() {
+        return outIncidency;
+    }
 
     boolean[] active; // track which vertices are currently part of the graph
 
@@ -115,6 +127,39 @@ public class Graph {
 
     public Arc[] outEdges(int vertex) {
         return outIncidency.get(vertex).toArray(new Arc[0]);
+    }
+
+    public void removeEdge(Edge edge) {
+        int u = edge.getSource();
+        int w = edge.getDest();
+        incidency.get(u).remove(edge);
+        incidency.get(w).remove(edge);
+
+        inIncidency.get(u).removeIf(a -> a.support == edge);
+        outIncidency.get(u).removeIf(a -> a.support == edge);
+        inIncidency.get(w).removeIf(a -> a.support == edge);
+        outIncidency.get(w).removeIf(a -> a.support == edge);
+
+        edgeCardinality--;
+    }
+
+    public void addEdgeIfNotDuplicate(Edge newEdge) {
+        int u = newEdge.getSource();
+        int x = newEdge.getDest();
+
+        // Check for existing edge between u and x
+        boolean exists = false;
+        for (Edge e : incidency.get(u)) {
+            if ((e.getSource() == u && e.getDest() == x) ||
+                    (e.getSource() == x && e.getDest() == u)) {
+                exists = true;
+                break;
+            }
+        }
+
+        if (!exists) {
+            addEdge(newEdge);
+        }
     }
 
 }
