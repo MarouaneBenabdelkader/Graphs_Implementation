@@ -1,10 +1,7 @@
-# TP3 - Génération d'arbres couvrants aléatoires
+# TP2 - Génération d'arbres couvrants aléatoires
 
 **Binôme :** Marouane BENADELKADER & Imad DAIM
 
-## Présentation
-
-Ce projet implémente plusieurs algorithmes de génération d'arbres couvrants aléatoires sur un graphe. L'objectif est de comparer différentes méthodes pour obtenir un arbre couvrant choisi (idéalement) de manière uniforme parmi tous les arbres couvrants du graphe.
 
 ## Avancement et Algorithmes Implémentés
 
