@@ -65,14 +65,11 @@ Nous avons implémenté les algorithmes suivants, tels que décrits dans le suje
 
 1. **Compilation :**  
    Un fichier `Makefile` est fourni. Pour compiler, lancez simplement :  
-   `make`
+   `make compile`
 
 2. **Exécution :**  
    Après compilation, lancez :  
    `make run`
-
-   Vous pouvez également exécuter directement :  
-   `java Main`
 
 3. **Choix de l’algorithme :**  
    Dans le fichier `Main.java`, vous pouvez décommenter la section correspondant à l’algorithme que vous souhaitez tester. Un commentaire dans le code indique clairement quelle ligne décommenter pour chaque algorithme.
@@ -339,6 +336,4 @@ FLIP_BASED_TREE_RANDOMIZER(G,T):
 
 ---
 
-**Remarque :** Tous ces algorithmes sont décrits à un niveau conceptuel. L’implémentation effective peut nécessiter des détails supplémentaires (structuration du graphe, gestion des sommets, des arêtes, du Union-Find, etc.).
-
-Ces pseudocodes, regroupés et améliorés, reflètent le cœur des algorithmes implémentés dans le projet.
+**Remarque :** Les pseudocodes présentés ci-dessus décrivent les algorithmes à un niveau conceptuel. Ils ne correspondent pas forcément ligne par ligne à l’implémentation Java fournie. L’implémentation réelle peut diverger pour diverses raisons : structures de données différentes (ArrayList, boolean[], HashSet, etc.), organisation interne du code, méthodes utilitaires (Union-Find, suppression des boucles, etc.), gestion des exceptions et des cas particuliers. Néanmoins, ces pseudocodes reflètent fidèlement la logique générale et le cœur des algorithmes implémentés dans le projet.

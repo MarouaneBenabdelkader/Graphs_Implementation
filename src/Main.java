@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.Set;
 import javax.swing.JFrame;
 
@@ -22,41 +23,74 @@ public class Main {
         // Choose a graph family
         Graph graph = chooseFromGraphFamily();
 
-        // Uncomment exactly one of the following methods to generate a random spanning tree:
+        // Display a menu to the user
+        System.out.println("Choisissez l'algorithme à exécuter :");
+        System.out.println("1) (3.1) Random MST (Poids aléatoires + Kruskal)");
+        System.out.println("2) (3.2) Parcours aléatoire (frontière)");
+        System.out.println("3) (3.3) Insertion aléatoire d'arêtes");
+        System.out.println("4) (3.4) Aldous-Broder");
+        System.out.println("5) (3.5) Contraction d'arêtes");
+        System.out.println("6) (3.6) Wilson");
+        System.out.println("7) (3.7) Flips successifs");
+        System.out.print("Votre choix (1-7): ");
 
-        // (3.1) Random MST (Assign random weights and compute MST)
-        //ArrayList<Edge> randomTree = genRandomMSTTree(graph);
+        Scanner sc = new Scanner(System.in);
+        int choice = sc.nextInt();
 
-        // (3.2) Random Traversal: Randomly choose edges from the frontier
-        //ArrayList<Edge> randomTree = genRandomTraversalTree(graph);
+        ArrayList<Edge> randomTree;
 
-        // (3.3) Random Insertion approach
-        //RandomInsertionGenerator insertionGen = new RandomInsertionGenerator();
-        //ArrayList<Edge> randomTree = new ArrayList<>(insertionGen.generateRandomSpanningTree(graph));
+        switch (choice) {
+            case 1: // (3.1) Random MST
+                randomTree = genRandomMSTTree(graph);
+                break;
+            case 2: // (3.2) Random Traversal
+                randomTree = genRandomTraversalTree(graph);
+                break;
+            case 3: // (3.3) Insertion aléatoire
+            {
+                RandomInsertionGenerator insertionGen = new RandomInsertionGenerator();
+                randomTree = new ArrayList<>(insertionGen.generateRandomSpanningTree(graph));
+            }
+            break;
+            case 4: // (3.4) Aldous-Broder
+            {
+                AldousBroderGenerator aldousBroderGen = new AldousBroderGenerator();
+                randomTree = new ArrayList<>(aldousBroderGen.generateRandomSpanningTree(graph));
+            }
+            break;
+            case 5: // (3.5) Contraction
+            {
+                RandomContractionGenerator contractionGen = new RandomContractionGenerator();
+                randomTree = contractionGen.generateRandomSpanningTree(graph);
+            }
+            break;
+            case 6: // (3.6) Wilson
+            {
+                WilsonGenerator wilsonGen = new WilsonGenerator();
+                randomTree = new ArrayList<>(wilsonGen.generateRandomSpanningTree(graph));
+            }
+            break;
+            case 7: // (3.7) Flipper
+            {
+                // For flipper, we need an initial spanning tree T.
+                // We can pick a BFS tree from vertex 0.
+                ArrayList<Edge> bfsTree = bfsTreeFromGraph(graph, 0);
+                Set<Edge> initialTree = new HashSet<>(bfsTree);
+                Flipper flipper = new Flipper(graph, initialTree, 0);
 
-        // (3.4) Aldous-Broder algorithm
-        //AldousBroderGenerator aldousBroderGen = new AldousBroderGenerator();
-        //ArrayList<Edge> randomTree = new ArrayList<>(aldousBroderGen.generateRandomSpanningTree(graph));
+                // Perform many flips to approach uniformity
+                System.out.print("Combien de flips voulez-vous effectuer ? (ex: 10000) : ");
+                int flips = sc.nextInt();
+                flipper.performFlips(flips);
 
-        // (3.5) Random Contraction approach
-        //RandomContractionGenerator contractionGen = new RandomContractionGenerator();
-        //ArrayList<Edge> randomTree = contractionGen.generateRandomSpanningTree(graph);
-
-        // (3.6) Wilson's algorithm
-        //WilsonGenerator wilsonGen = new WilsonGenerator();
-        //ArrayList<Edge> randomTree = new ArrayList<>(wilsonGen.generateRandomSpanningTree(graph));
-
-        // (3.7) Flipper algorithm
-        // For flipper, we need an initial spanning tree T. Let's pick a BFS tree as a start.
-        //ArrayList<Edge> bfsTree = bfsTreeFromGraph(graph, 0);
-        //Set<Edge> initialTree = new HashSet<>(bfsTree);
-        //Flipper flipper = new Flipper(graph, initialTree, 0);
-        //flipper.performFlips(10000); // perform many flips to approach uniform distribution
-        //ArrayList<Edge> randomTree = new ArrayList<>(flipper.getTreeEdges());
-
-        // For demonstration, let's default to Aldous-Broder if nothing else is chosen:
-        AldousBroderGenerator aldousBroderGen = new AldousBroderGenerator();
-        ArrayList<Edge> randomTree = new ArrayList<>(aldousBroderGen.generateRandomSpanningTree(graph));
+                randomTree = new ArrayList<>(flipper.getTreeEdges());
+            }
+            break;
+            default:
+                System.out.println("Choix invalide, utilisation par défaut de l'algorithme d'Aldous-Broder.");
+                AldousBroderGenerator aldousBroderGen = new AldousBroderGenerator();
+                randomTree = new ArrayList<>(aldousBroderGen.generateRandomSpanningTree(graph));
+        }
 
         // Compute statistics
         int noOfSamples = 10;
@@ -75,6 +109,7 @@ public class Main {
         }
 
         if (grid != null) showGrid(grid, randomTree);
+        sc.close();
     }
 
     private static Graph chooseFromGraphFamily() {
