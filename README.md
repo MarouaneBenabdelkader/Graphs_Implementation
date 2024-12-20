@@ -11,55 +11,13 @@ Ce projet implémente plusieurs algorithmes de génération d'arbres couvrants a
 Nous avons implémenté les algorithmes suivants, tels que décrits dans le sujet :
 
 1. **Arbres couvrants par affectation de poids aléatoires (3.1)**
-    - On attribue à chaque arête un poids aléatoire dans [0,1), puis on calcule un arbre couvrant de poids minimum (par Kruskal ou Prim).
-    - Chaque exécution produit un arbre potentiellement différent, offrant une méthode simple mais efficace pour obtenir un arbre "aléatoire".
-
 2. **Parcours aléatoire (3.2)**
-    - On parcourt le graphe en partant d’un sommet aléatoire, en choisissant l’ordre d'exploration des arêtes de façon aléatoire (soit via un "frontier" entièrement aléatoire, soit en randomisant l'ordre d'un parcours BFS ou DFS).
-    - Cela génère un arbre couvrant qui varie en fonction des choix aléatoires effectués lors du parcours.
-
 3. **Insertion aléatoire d’arêtes (3.3)**
-    - On part d'un ensemble vide et on ajoute des arêtes choisies aléatoirement.
-    - On utilise une structure Union-Find pour éviter de former des cycles.
-    - On répète jusqu’à obtenir |V|-1 arêtes. L’ensemble obtenu est un arbre couvrant.
-
 4. **Algorithme d’Aldous-Broder (3.4)**
-    - On effectue une marche aléatoire sur le graphe jusqu’à ce que tous les sommets soient visités au moins une fois.
-    - À chaque nouveau sommet découvert, on ajoute l’arête par laquelle on est arrivé dans l’arbre couvrant.
-    - L’algorithme produit un arbre couvrant uniformément choisi parmi tous ceux possibles (en théorie).
-
 5. **Par contraction d’arêtes (3.5)**
-    - On choisit une arête aléatoirement, on la contracte, puis on construit récursivement un arbre couvrant sur le graphe contracté.
-    - On ajoute ensuite l’arête contractée à l’arbre.
-    - Cette méthode, plus complexe à implémenter, permet également d'obtenir un arbre couvrant uniforme.
-
 6. **Algorithme de Wilson (3.6)**
-    - Comme Aldous-Broder, Wilson génère un arbre couvrant uniformément au moyen de marches aléatoires.
-    - On part d’un sommet initial, puis on incorpore progressivement les sommets extérieurs via des marches aléatoires qui rejoignent l’arbre existant, en supprimant naturellement les cycles formés.
-
 7. **Par flips successifs (3.7)**
-    - On part d’un arbre couvrant quelconque T.
-    - On effectue des "flips" en ajoutant une arête hors de T, formant un cycle, puis en retirant une arête de ce cycle.
-    - Après un grand nombre de flips, la distribution de l’arbre résultant tend vers l’uniformité.
-    - Cette méthode peut être plus lente que les précédentes.
 
-## Comparaison des Algorithmes
-
-- **Uniformité :**  
-  Aldous-Broder et Wilson garantissent une distribution réellement uniforme sur l'ensemble des arbres couvrants. Les méthodes par poids aléatoires (3.1), insertion aléatoire (3.3) ou contraction (3.5) le promettent également, mais avec plus ou moins de complexité et de garanties théoriques. Le flip (3.7), après de très nombreux flips, s’approche aussi de l’uniformité.
-
-- **Complexité :**
-    - L’approche par affectation de poids et calcul MST (3.1) est assez simple à coder et relativement efficace.
-    - Les parcours aléatoires (3.2) sont simples et rapides, mais l'uniformité n'est pas toujours garantie (selon la méthode de parcours).
-    - L’insertion aléatoire (3.3) et la contraction (3.5) demandent plus de gestion de la structure du graphe (Union-Find, gestion des boucles, etc.).
-    - Aldous-Broder (3.4) et Wilson (3.6) sont élégants et garantissent l’uniformité, mais nécessitent des marches aléatoires potentiellement longues.
-    - Les flips (3.7) sont conceptuellement simples, mais en pratique demandent beaucoup de temps (de nombreux flips) pour atteindre une distribution quasi uniforme.
-
-- **Facilité d’implémentation :**  
-  De manière générale :
-    - (3.1) et (3.2) : plus faciles.
-    - (3.3), (3.4), (3.6) : intermédiaires.
-    - (3.5) et (3.7) : plus complexes.
 
 ## Utilisation du Projet
 
@@ -71,18 +29,6 @@ Nous avons implémenté les algorithmes suivants, tels que décrits dans le suje
    Après compilation, lancez :  
    `make run`
 
-3. **Choix de l’algorithme :**  
-   Dans le fichier `Main.java`, vous pouvez décommenter la section correspondant à l’algorithme que vous souhaitez tester. Un commentaire dans le code indique clairement quelle ligne décommenter pour chaque algorithme.
-
-4. **Visualisation et statistiques :**  
-   Le programme génère des statistiques sur l’arbre couvrant obtenu (diamètre, distribution des degrés, etc.). Il peut également afficher l’arbre sous forme graphique (si une grille est utilisée) et enregistrer une image PNG du résultat.
-
-## Remarques Finales
-
-- Les résultats peuvent varier d’une exécution à l’autre, en particulier pour les méthodes qui reposent sur des choix aléatoires.
-- Les tests de performance et la comparaison détaillée des temps d’exécution, ainsi que la vérification de l’uniformité des distributions, sont laissés à l’appréciation de l’utilisateur.
-
-Ci-dessous se trouve une version plus complète et cohérente de l’ensemble des algorithmes implémentés, présentés sous forme de pseudocodes, et déjà mentionnés dans le README. Les algorithmes sont décrits de manière indépendante, avec une terminologie uniforme. Chaque bloc de pseudocode est précédé d’un court rappel de l’objectif et du principe de l’algorithme.
 
 ---
 
@@ -333,7 +279,36 @@ FLIP_BASED_TREE_RANDOMIZER(G,T):
 
     return T
 ```
+## **Comparaison des Algorithmes**
+
+Une comparaison détaillée des algorithmes a été réalisée sur un échantillon de 10 arbres générés pour chaque méthode. Les résultats suivants montrent les moyennes des métriques obtenues :
+
+| **Algorithme**          | **Excentricité Moy.** | **Indice de Wiener**  | **Diamètre Moy.** | **Nb. Feuilles Moy.** | **Nb. Sommets Deg. 2 Moy.** | **Temps Moy. (ms)** |
+|--------------------------|-----------------------|-----------------------|-------------------|-----------------------|----------------------------|---------------------|
+| **3.1 Random MST**       | 204.14               | \(4.37 \times 10^{10}\) | 774.9            | 5216.5               | 7320.8                    | 52.0                |
+| **3.2 Random Traversal** | 108.34               | \(2.62 \times 10^{10}\) | 429.1            | 5525.8               | 6822.1                    | 17.0                |
+| **3.3 Random Insertion** | 226.94               | \(4.86 \times 10^{10}\) | 877.8            | 5211.8               | 7321.0                    | 13.0                |
+| **3.4 Aldous-Broder**    | 264.52               | \(5.52 \times 10^{10}\) | 1041.4           | 5002.4               | 7650.2                    | 19.0                |
+| **3.5 Contraction**      | 6.75                 | \(1.76 \times 10^9\)    | 32.2             | 10497.3              | 3119.2                    | 6686.0              |
+| **3.6 Wilson**           | 256.24               | \(5.36 \times 10^{10}\) | 975.8            | 5014.6               | 7625.0                    | 671.0               |
+| **3.7 Flips**            | 92.0                 | \(2.25 \times 10^{10}\) | 367.0            | 174.0                | 16706.0                   | 19.0                |
+
+### **Analyse des Résultats**
+1. **Temps d’exécution :**
+    - Les algorithmes **3.3 Random Insertion** et **3.2 Random Traversal** sont les plus rapides.
+    - Les algorithmes basés sur des marches aléatoires (**3.4 Aldous-Broder**, **3.6 Wilson**) nécessitent plus de temps mais offrent une meilleure uniformité.
+    - L’algorithme **3.5 Contraction** est extrêmement coûteux en termes de temps.
+
+2. **Uniformité :**
+    - Les méthodes **3.4 Aldous-Broder**, **3.6 Wilson**, et **3.7 Flips** garantissent une uniformité théorique.
+    - Les autres méthodes, bien que rapides, ne garantissent pas une distribution uniformément aléatoire.
+
+3. **Structure des arbres :**
+    - **3.5 Contraction** produit des arbres très compacts avec peu d'excentricité et de diamètre.
+    - **3.7 Flips** tend vers des arbres avec un grand nombre de sommets de degré 2 et peu de feuilles.
+    - Les méthodes **3.1 Random MST** et **3.3 Random Insertion** offrent un bon compromis.
+
+
 
 ---
 
-**Remarque :** Les pseudocodes présentés ci-dessus décrivent les algorithmes à un niveau conceptuel. Ils ne correspondent pas forcément ligne par ligne à l’implémentation Java fournie. L’implémentation réelle peut diverger pour diverses raisons : structures de données différentes (ArrayList, boolean[], HashSet, etc.), organisation interne du code, méthodes utilitaires (Union-Find, suppression des boucles, etc.), gestion des exceptions et des cas particuliers. Néanmoins, ces pseudocodes reflètent fidèlement la logique générale et le cœur des algorithmes implémentés dans le projet.

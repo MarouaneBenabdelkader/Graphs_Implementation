@@ -15,6 +15,9 @@ public class Graph {
     public ArrayList<LinkedList<Edge>> getIncidency() {
         return incidency;
     }
+    public int getActiveVertexCount() {
+        return order;
+    }
 
     public ArrayList<LinkedList<Arc>> getInIncidency() {
         return inIncidency;
@@ -47,6 +50,40 @@ public class Graph {
         for (int i = 0; i < upperBound; i++) {
             active[i] = true;
         }
+    }
+
+    /**
+     * Creates a deep copy of the graph.
+     * @return A new Graph instance with the same structure
+     */
+    public Graph copy() {
+        Graph copy = new Graph(this.upperBound);
+        copy.order = this.order;
+        copy.edgeCardinality = this.edgeCardinality;
+
+        // Copy active vertices state
+        System.arraycopy(this.active, 0, copy.active, 0, this.upperBound);
+
+        // Clear the new graph's lists (they were initialized in constructor)
+        for (int i = 0; i < upperBound; i++) {
+            copy.incidency.get(i).clear();
+            copy.inIncidency.get(i).clear();
+            copy.outIncidency.get(i).clear();
+        }
+
+        // Copy all edges and their corresponding arcs
+        for (int v = 0; v < upperBound; v++) {
+            if (this.isVertex(v)) {
+                for (Edge e : this.incidency.get(v)) {
+                    if (e.getSource() == v) { // Add each edge only once
+                        Edge newEdge = new Edge(e.getSource(), e.getDest(), e.weight);
+                        copy.addEdge(newEdge);
+                    }
+                }
+            }
+        }
+
+        return copy;
     }
 
     public boolean isVertex(int vertex) {
@@ -147,19 +184,12 @@ public class Graph {
         int u = newEdge.getSource();
         int x = newEdge.getDest();
 
-        // Check for existing edge between u and x
-        boolean exists = false;
         for (Edge e : incidency.get(u)) {
-            if ((e.getSource() == u && e.getDest() == x) ||
-                    (e.getSource() == x && e.getDest() == u)) {
-                exists = true;
-                break;
+            if ((e.getSource() == u && e.getDest() == x) || (e.getSource() == x && e.getDest() == u)) {
+                return; // Edge already exists
             }
         }
 
-        if (!exists) {
-            addEdge(newEdge);
-        }
+        addEdge(newEdge);
     }
-
 }

@@ -20,10 +20,10 @@ public class Main {
     static Grid grid = null;
 
     public static void main(String[] argv) throws InterruptedException {
-        // Choose a graph family
+        // Choix du graphe sur lequel travailler
         Graph graph = chooseFromGraphFamily();
 
-        // Display a menu to the user
+        // Menu interactif
         System.out.println("Choisissez l'algorithme à exécuter :");
         System.out.println("1) (3.1) Random MST (Poids aléatoires + Kruskal)");
         System.out.println("2) (3.2) Parcours aléatoire (frontière)");
@@ -72,13 +72,11 @@ public class Main {
             break;
             case 7: // (3.7) Flipper
             {
-                // For flipper, we need an initial spanning tree T.
-                // We can pick a BFS tree from vertex 0.
+                // Pour flipper, on a besoin d'un arbre initial, on peut prendre un BFS tree depuis 0
                 ArrayList<Edge> bfsTree = bfsTreeFromGraph(graph, 0);
                 Set<Edge> initialTree = new HashSet<>(bfsTree);
                 Flipper flipper = new Flipper(graph, initialTree, 0);
 
-                // Perform many flips to approach uniformity
                 System.out.print("Combien de flips voulez-vous effectuer ? (ex: 10000) : ");
                 int flips = sc.nextInt();
                 flipper.performFlips(flips);
@@ -92,37 +90,40 @@ public class Main {
                 randomTree = new ArrayList<>(aldousBroderGen.generateRandomSpanningTree(graph));
         }
 
-        // Compute statistics
+        // Calcul de statistiques sur l'arbre généré
         int noOfSamples = 10;
         Stats stats = new Stats(noOfSamples);
         for (int i = 0; i < noOfSamples; i++) {
-            // Here we re-generate a tree each time for stats if needed
-            // or just reuse the same randomTree for demonstration
             stats.update(randomTree);
         }
         stats.print();
 
-        // Print out the chosen tree edges
+        // Affichage des arêtes de l'arbre couvrant généré
         System.out.println("Random Spanning Tree Edges:");
         for (Edge e : randomTree) {
             System.out.println(e.getSource() + " -- " + e.getDest() + " : " + e.weight);
         }
 
+        // Affichage graphique sur grille (si applicable)
         if (grid != null) showGrid(grid, randomTree);
+
+        // Exemple de comparaison entre algorithmes (optionnel)
+        // compareAlgorithms(graph);
+
         sc.close();
     }
 
     private static Graph chooseFromGraphFamily() {
-        // You can parameterize this to choose between different graph classes
+        // Paramétrez cette fonction pour choisir la famille de graphes
         grid = new Grid(1920 / 11, 1080 / 11);
-        // Other possibilities:
+        // Autres options :
         // Graph graph = new Complete(400).graph;
-        // Graph graph = new ErdosRenyi(1_000, 100).graph;
-        // Graph graph = new Lollipop(1_000).graph;
+        // Graph graph = new ErdosRenyi(1000, 100).graph;
+        // Graph graph = new Lollipop(1000).graph;
         return grid.graph;
     }
 
-    // (3.1) Generate a random MST by assigning random weights and running MST algorithm
+    // (3.1) Génération d'un MST aléatoire en attribuant des poids aléatoires puis Kruskal
     public static ArrayList<Edge> genRandomMSTTree(Graph graph) {
         RandomMSTGenerator generator = new RandomMSTGenerator(
                 new KruskalMSTAlgorithm(),
@@ -131,15 +132,14 @@ public class Main {
         return generator.generateRandomMST(graph);
     }
 
-    // (3.2) Generate a random spanning tree by random traversal approach
+    // (3.2) Parcours aléatoire
     public static ArrayList<Edge> genRandomTraversalTree(Graph graph) {
         RandomTraversalGenerator traversalGen = new RandomTraversalGenerator();
         return new ArrayList<>(traversalGen.generateRandomSpanningTree(graph));
     }
 
     /**
-     * A helper method for (3.7) or whenever we need an initial spanning tree.
-     * This generates a BFS tree from the given graph starting at 'rootVertex'.
+     * BFS tree depuis un sommet donné, utile par exemple pour initialiser Flipper (3.7)
      */
     public static ArrayList<Edge> bfsTreeFromGraph(Graph graph, int rootVertex) {
         ArrayList<Arc> treeArcs = BreadthFirstSearch.generateTree(graph, rootVertex);
@@ -212,11 +212,74 @@ public class Main {
 
         window.setVisible(true);
 
-        // Save the image
+        // Sauvegarde de l'image
         try {
             laby.saveImage("resources/random.png");
         } catch (IOException e1) {
             e1.printStackTrace();
         }
     }
+
+    /**
+     * Exemple de comparaison entre algorithmes.
+     * Adaptez la liste d'algorithmes, le nombre d'échantillons, ou les metrics.
+     */
+    private static void compareAlgorithms(Graph graph) {
+        int samples = 50;
+        String[] algoNames = { "Aldous-Broder", "Wilson", "Random MST", "Random Traversal" };
+
+        double[] avgDiameter = new double[algoNames.length];
+        double[] avgEccentricity = new double[algoNames.length];
+        double[] avgWiener = new double[algoNames.length];
+
+        for (int i = 0; i < algoNames.length; i++) {
+            long sumDiameter = 0;
+            double sumEccentricity = 0.0;
+            long sumWiener = 0;
+
+            for (int s = 0; s < samples; s++) {
+                ArrayList<Edge> tree = generateTreeForAlgo(graph, algoNames[i]);
+                RootedTree rooted = new RootedTree(tree, 0);
+
+                sumDiameter += rooted.getDiameter();
+                sumEccentricity += rooted.getAverageEccentricity();
+                sumWiener += rooted.getWienerIndex();
+            }
+
+            avgDiameter[i] = (double)sumDiameter / samples;
+            avgEccentricity[i] = sumEccentricity / samples;
+            avgWiener[i] = (double)sumWiener / samples;
+        }
+
+        System.out.println("Comparaison des algorithmes sur " + samples + " échantillons chacun :");
+        System.out.println("Algorithme         Diamètre_Moyen   Excentricité_Moyenne   Wiener_Moyen");
+        for (int i = 0; i < algoNames.length; i++) {
+            System.out.printf("%-18s %-16.2f %-22.2f %-12.2f\n",
+                    algoNames[i], avgDiameter[i], avgEccentricity[i], avgWiener[i]);
+        }
+    }
+
+    private static ArrayList<Edge> generateTreeForAlgo(Graph graph, String algoName) {
+        switch (algoName) {
+            case "Aldous-Broder":
+                AldousBroderGenerator aldous = new AldousBroderGenerator();
+                return new ArrayList<>(aldous.generateRandomSpanningTree(graph));
+            case "Wilson":
+                WilsonGenerator wilson = new WilsonGenerator();
+                return new ArrayList<>(wilson.generateRandomSpanningTree(graph));
+            case "Random MST":
+                RandomMSTGenerator mstGen = new RandomMSTGenerator(
+                        new KruskalMSTAlgorithm(),
+                        new RandomWeightAssigner()
+                );
+                return mstGen.generateRandomMST(graph);
+            case "Random Traversal":
+                RandomTraversalGenerator traversal = new RandomTraversalGenerator();
+                return new ArrayList<>(traversal.generateRandomSpanningTree(graph));
+            default:
+                AldousBroderGenerator def = new AldousBroderGenerator();
+                return new ArrayList<>(def.generateRandomSpanningTree(graph));
+        }
+    }
+
 }

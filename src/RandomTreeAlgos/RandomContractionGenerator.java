@@ -4,11 +4,11 @@ import Graph.Edge;
 import Graph.Graph;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
-/**
- * Generates a random spanning tree by recursively contracting random edges.
- */
 public class RandomContractionGenerator {
     private final Random rng;
 
@@ -21,110 +21,93 @@ public class RandomContractionGenerator {
     }
 
     /**
-     * Generates a random spanning tree of the given connected graph using edge contraction.
-     *
-     * This method:
-     * 1. If the graph has only one vertex, return an empty set of edges.
-     * 2. Otherwise, pick a random non-loop edge, contract it, recursively get a spanning
-     *    tree of the smaller graph, and add the chosen edge.
-     *
-     * @param graph a connected graph
-     * @return a set of edges forming a spanning tree
+     * Generates a random spanning tree using edge contraction.
      */
-    public ArrayList<Edge> generateRandomSpanningTree(Graph graph) {
-        // Base case: if only one vertex, no edges are needed
-        if (graph.order == 1) {
-            return new ArrayList<>();
-        }
+    public ArrayList<Edge> generateRandomSpanningTree(Graph originalGraph) {
+        // Create a working copy of the graph
+        Graph graph = originalGraph.copy();
+        ArrayList<Edge> treeEdges = new ArrayList<>();
 
-        // Collect all non-loop edges
-        ArrayList<Edge> candidates = new ArrayList<>();
-        for (int v = 0; v < graph.upperBound; v++) {
-            if (graph.isVertex(v)) {
-                for (Edge e : graph.getIncidency().get(v)) {
-                    if (e.getSource() == v && e.getSource() != e.getDest()) {
-                        // Add only once per undirected edge and ensure it's not a loop
-                        candidates.add(e);
-                    }
-                }
+        // Map to keep track of merged vertices
+        HashMap<Integer, Integer> vertexMapping = new HashMap<>();
+        for (int i = 0; i < graph.upperBound; i++) {
+            if (graph.isVertex(i)) {
+                vertexMapping.put(i, i);
             }
         }
 
-        // Pick a random edge from candidates
-        if (candidates.isEmpty()) {
-            // If no candidates, return empty set (should not happen if graph >1 vertex and connected)
-            return new ArrayList<>();
+        while (graph.getActiveVertexCount() > 1) {
+            // Get all valid edges for contraction
+            ArrayList<Edge> candidates = new ArrayList<>();
+            for (int v = 0; v < graph.upperBound; v++) {
+                if (graph.isVertex(v)) {
+                    for (Edge e : graph.getIncidency().get(v)) {
+                        if (e.getSource() == v && e.getSource() != e.getDest()) {
+                            candidates.add(e);
+                        }
+                    }
+                }
+            }
+
+            if (candidates.isEmpty()) {
+                throw new IllegalStateException("No valid edges found in connected graph with multiple vertices");
+            }
+
+            // Choose a random edge
+            Edge chosen = candidates.get(rng.nextInt(candidates.size()));
+
+            // Map vertices through all merges to get original vertices
+            int originalSource = getOriginalVertex(chosen.getSource(), vertexMapping);
+            int originalDest = getOriginalVertex(chosen.getDest(), vertexMapping);
+
+            // Add edge between original vertices to tree
+            treeEdges.add(new Edge(originalSource, originalDest, chosen.weight));
+
+            // Contract the edge
+            contractEdge(graph, chosen, vertexMapping);
         }
 
-        Edge chosen = candidates.get(rng.nextInt(candidates.size()));
-
-        // Contract this edge
-        contractEdge(graph, chosen);
-
-        // Recursively find a spanning tree of the contracted graph
-        ArrayList<Edge> subtree = generateRandomSpanningTree(graph);
-
-        // Add chosen edge to subtree to form a spanning tree of the original graph
-        subtree.add(chosen);
-        return subtree;
+        return treeEdges;
     }
 
-    /**
-     * Contract the given edge in the graph:
-     * 1. Identify the vertices u, v of edge e (u,v).
-     * 2. Remove v from the graph and merge it into u.
-     * 3. Replace all occurrences of v in edges with u.
-     * 4. Remove loops (edges (u,u)) that may have been formed.
-     *
-     * After contraction:
-     * - The graph has one fewer vertex.
-     * - Some edges may need to be updated or removed.
-     */
-    private void contractEdge(Graph graph, Edge e) {
+    private int getOriginalVertex(int current, HashMap<Integer, Integer> vertexMapping) {
+        int original = current;
+        while (vertexMapping.get(original) != original) {
+            original = vertexMapping.get(original);
+        }
+        // Path compression - update all intermediate mappings
+        if (current != original) {
+            vertexMapping.put(current, original);
+        }
+        return original;
+    }
+
+    private void contractEdge(Graph graph, Edge e, HashMap<Integer, Integer> vertexMapping) {
         int u = e.getSource();
         int v = e.getDest();
-        // After contraction, v will be merged into u.
 
-        // Step 1: We'll iterate over all edges currently incident to v
-        // and redirect them to u.
-        ArrayList<Edge> edgesToRedirect = new ArrayList<>(graph.getIncidency().get(v));
+        // Update vertex mapping
+        vertexMapping.put(v, u);
 
-        // Delete vertex v at the end, but first handle edges
-        for (Edge edge : edgesToRedirect) {
-            int x = edge.oppositeExtremity(v);
-            if (x == u) {
-                // edge (v,x) = (v,u) will become (u,u) -> loop
-                // Remove it after redirection
-                continue;
-            } else {
-                // This edge connected v to x.
-                // Now it should connect u to x (unless x == u)
-                // Remove the old edge and add a new one (u,x) with the same weight.
-                graph.removeEdge(edge);
+        // Get all edges incident to v
+        Set<Edge> edgesToProcess = new HashSet<>(graph.getIncidency().get(v));
 
-                if (u != x) {
-                    Edge newEdge = new Edge(u, x, edge.weight);
+        // Process each edge
+        for (Edge edge : edgesToProcess) {
+            if (edge != e) {  // Skip the contracted edge
+                int otherEnd = edge.oppositeExtremity(v);
+                if (otherEnd != u) {  // Skip if it would create a self-loop
+                    // Remove the old edge
+                    graph.removeEdge(edge);
+                    // Add new edge connecting u to otherEnd
+                    Edge newEdge = new Edge(u, otherEnd, edge.weight);
                     graph.addEdgeIfNotDuplicate(newEdge);
                 }
             }
         }
 
-        // Remove loops at u (if any)
-        removeLoopsAt(graph, u);
-
-        // Delete vertex v
+        // Remove the contracted edge and vertex
+        graph.removeEdge(e);
         graph.deleteVertex(v);
-    }
-
-    /**
-     * Remove loops at a given vertex (edges of form (v,v)).
-     */
-    private void removeLoopsAt(Graph graph, int v) {
-        ArrayList<Edge> incidentEdges = new ArrayList<>(graph.getIncidency().get(v));
-        for (Edge edge : incidentEdges) {
-            if (edge.getSource() == edge.getDest()) {
-                graph.removeEdge(edge);
-            }
-        }
     }
 }
